@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -10,26 +10,60 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◇</text></svg>">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #2a2a2a;
-      --text: #e8e0d4;
-      --muted: #807e76;
-      --accent: #e8009a;
-      --green: #4ade80;
-      --red: #f87171;
-      --green-bg: rgba(74, 222, 128, 0.08);
-      --red-bg: rgba(248, 113, 113, 0.08);
       --font-body: 'DM Sans', -apple-system, system-ui, sans-serif;
       --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
       --font-display: 'Georgia', serif;
       --sidebar-w: 260px;
+      --radius: 8px;
+      --radius-sm: 6px;
     }
 
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+    /* Dark theme (default) */
+    [data-theme="dark"] {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-hover: #1a1a1a;
+      --border: #242424;
+      --border-hover: #3a3a3a;
+      --text: #e8e0d4;
+      --text-secondary: #a09e96;
+      --muted: #6b6963;
+      --accent: #e8009a;
+      --accent-soft: rgba(232, 0, 154, 0.1);
+      --accent-hover: rgba(232, 0, 154, 0.15);
+      --green: #4ade80;
+      --red: #f87171;
+      --green-bg: rgba(74, 222, 128, 0.08);
+      --red-bg: rgba(248, 113, 113, 0.08);
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+      --overlay: rgba(0,0,0,0.6);
+    }
+
+    /* Light theme */
+    [data-theme="light"] {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --surface-hover: #f5f5f4;
+      --border: #e5e4e1;
+      --border-hover: #cccbc8;
+      --text: #1c1917;
+      --text-secondary: #57534e;
+      --muted: #a8a29e;
+      --accent: #d1006e;
+      --accent-soft: rgba(209, 0, 110, 0.08);
+      --accent-hover: rgba(209, 0, 110, 0.12);
+      --green: #16a34a;
+      --red: #dc2626;
+      --green-bg: rgba(22, 163, 74, 0.08);
+      --red-bg: rgba(220, 38, 38, 0.08);
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --overlay: rgba(0,0,0,0.3);
+    }
 
     body {
       font-family: var(--font-body);
@@ -39,99 +73,130 @@
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
+      transition: background 0.2s, color 0.2s;
     }
 
-    /* Header */
+    /* ── Header ── */
     header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 20px;
+      padding: 0 16px;
+      height: 48px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
       position: sticky;
       top: 0;
       z-index: 100;
       gap: 12px;
-      flex-wrap: wrap;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
     }
 
     .logo {
       font-family: var(--font-mono);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--accent);
       letter-spacing: -0.5px;
       white-space: nowrap;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .filename {
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 200px;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
+    .change-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: none;
+      flex-shrink: 0;
     }
 
+    .change-dot.visible { display: block; }
+
+    .header-center { flex: 1; display: flex; justify-content: center; }
+    .header-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+    /* ── Buttons ── */
     .btn {
       font-family: var(--font-mono);
-      font-size: 12px;
-      padding: 6px 14px;
+      font-size: 11px;
+      padding: 5px 12px;
       border: 1px solid var(--border);
       background: transparent;
-      color: var(--text);
-      border-radius: 6px;
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.15s;
       white-space: nowrap;
+      line-height: 1.4;
     }
 
-    .btn:hover { border-color: var(--muted); }
-    .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn:hover { border-color: var(--border-hover); color: var(--text); background: var(--surface-hover); }
     .btn.primary { border-color: var(--accent); color: var(--accent); }
     .btn.primary:hover { background: var(--accent); color: #fff; }
 
-    /* Tabs */
+    .btn-icon {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover { background: var(--surface-hover); color: var(--text); }
+
+    /* ── Tabs ── */
     .tabs {
       display: flex;
-      gap: 2px;
+      gap: 1px;
       background: var(--bg);
-      border-radius: 8px;
-      padding: 2px;
+      border-radius: var(--radius);
+      padding: 3px;
     }
 
     .tab {
       font-family: var(--font-mono);
-      font-size: 12px;
-      padding: 5px 12px;
+      font-size: 11px;
+      padding: 4px 14px;
       border: none;
       background: transparent;
       color: var(--muted);
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.15s;
     }
 
     .tab:hover { color: var(--text); }
-    .tab.active { background: var(--surface); color: var(--text); }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 
-    /* Layout: sidebar + main */
-    .app-body {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
+    /* ── Layout ── */
+    .app-body { flex: 1; display: flex; overflow: hidden; }
 
-    /* Sidebar */
+    /* ── Sidebar ── */
     .sidebar {
       width: var(--sidebar-w);
       min-width: var(--sidebar-w);
@@ -140,15 +205,13 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: margin-left 0.2s ease;
+      transition: margin-left 0.2s ease, background 0.2s, border-color 0.2s;
     }
 
-    .sidebar.hidden {
-      margin-left: calc(var(--sidebar-w) * -1);
-    }
+    .sidebar.hidden { margin-left: calc(var(--sidebar-w) * -1); }
 
     .sidebar-header {
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -158,7 +221,7 @@
 
     .sidebar-header .folder-name {
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text);
       font-weight: 500;
       overflow: hidden;
@@ -168,7 +231,7 @@
     }
 
     .sidebar-search {
-      padding: 8px 14px;
+      padding: 8px 12px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -178,26 +241,23 @@
       border: 1px solid var(--border);
       color: var(--text);
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11px;
       padding: 6px 10px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       outline: none;
+      transition: border-color 0.15s;
     }
 
-    .sidebar-search input:focus { border-color: var(--muted); }
+    .sidebar-search input:focus { border-color: var(--accent); }
     .sidebar-search input::placeholder { color: var(--muted); }
 
-    .file-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 4px 0;
-    }
+    .file-list { flex: 1; overflow-y: auto; padding: 4px 0; }
 
     .file-item {
-      padding: 7px 14px;
+      padding: 6px 12px;
       font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 11px;
+      color: var(--text-secondary);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -206,12 +266,11 @@
       border-left: 2px solid transparent;
     }
 
-    .file-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-    .file-item.active { color: var(--text); background: rgba(232, 0, 154, 0.08); border-left-color: var(--accent); }
+    .file-item:hover { color: var(--text); background: var(--surface-hover); }
+    .file-item.active { color: var(--text); background: var(--accent-soft); border-left-color: var(--accent); }
 
     .file-item .modified-dot {
-      width: 5px;
-      height: 5px;
+      width: 5px; height: 5px;
       background: var(--accent);
       border-radius: 50%;
       flex-shrink: 0;
@@ -228,85 +287,76 @@
     }
 
     .folder-toggle {
-      padding: 6px 14px;
+      padding: 5px 12px;
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
       color: var(--muted);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .folder-toggle:hover { color: var(--text); }
-    .folder-toggle .arrow { transition: transform 0.15s; font-size: 9px; }
+    .folder-toggle .arrow { transition: transform 0.15s; font-size: 8px; }
     .folder-toggle .arrow.open { transform: rotate(90deg); }
 
-    /* Main */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-width: 0;
-    }
+    /* ── Main ── */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-    /* Empty state */
+    /* ── Empty state ── */
     .empty-state {
       flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px 20px;
-      text-align: center;
-      gap: 16px;
-    }
-
-    .empty-state .icon {
-      font-size: 48px;
-      opacity: 0.3;
-    }
-
-    .empty-state p {
-      color: var(--muted);
-      font-size: 15px;
-      max-width: 340px;
-      line-height: 1.6;
+      padding: 32px 20px;
     }
 
     .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 40px;
+      border: 1.5px dashed var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
       transition: all 0.2s;
       width: 100%;
-      max-width: 400px;
+      max-width: 440px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
 
-    .drop-zone.over {
-      border-color: var(--accent);
-      background: rgba(232, 0, 154, 0.05);
+    .drop-zone.over { border-color: var(--accent); background: var(--accent-soft); }
+
+    .drop-zone .icon {
+      font-size: 40px;
+      color: var(--accent);
+      opacity: 0.4;
+    }
+
+    .drop-zone p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 280px;
     }
 
     .empty-actions {
       display: flex;
-      gap: 10px;
-      margin-top: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
     }
 
-    /* Content panels */
-    .panel {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px 20px;
-      display: none;
-    }
-
+    /* ── Panels ── */
+    .panel { flex: 1; overflow-y: auto; padding: 32px 24px; display: none; }
     .panel.visible { display: block; }
 
-    /* Rendered markdown */
+    /* ── Rendered markdown ── */
     .rendered {
       max-width: 720px;
       margin: 0 auto;
@@ -323,7 +373,6 @@
     .rendered h1 { font-size: 28px; }
     .rendered h2 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
     .rendered h3 { font-size: 18px; }
-
     .rendered p { margin: 0.8em 0; }
     .rendered a { color: var(--accent); text-decoration: none; }
     .rendered a:hover { text-decoration: underline; }
@@ -331,7 +380,7 @@
     .rendered code {
       font-family: var(--font-mono);
       font-size: 0.88em;
-      background: var(--surface);
+      background: var(--surface-hover);
       padding: 2px 6px;
       border-radius: 4px;
     }
@@ -339,57 +388,31 @@
     .rendered pre {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 16px;
       overflow-x: auto;
       margin: 1em 0;
     }
 
-    .rendered pre code {
-      background: none;
-      padding: 0;
-      font-size: 13px;
-      line-height: 1.6;
-    }
+    .rendered pre code { background: none; padding: 0; font-size: 13px; line-height: 1.6; }
 
     .rendered blockquote {
       border-left: 3px solid var(--accent);
       padding-left: 16px;
-      color: var(--muted);
+      color: var(--text-secondary);
       margin: 1em 0;
     }
 
     .rendered ul, .rendered ol { padding-left: 24px; margin: 0.8em 0; }
     .rendered li { margin: 0.3em 0; }
+    .rendered img { max-width: 100%; border-radius: var(--radius); margin: 1em 0; }
+    .rendered hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
 
-    .rendered img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin: 1em 0;
-    }
-
-    .rendered hr {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 2em 0;
-    }
-
-    .rendered table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1em 0;
-      font-size: 14px;
-    }
-
-    .rendered th, .rendered td {
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      text-align: left;
-    }
-
+    .rendered table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
+    .rendered th, .rendered td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
     .rendered th { background: var(--surface); font-weight: 600; }
 
-    /* Editor */
+    /* ── Editor ── */
     .editor {
       width: 100%;
       max-width: 720px;
@@ -407,7 +430,7 @@
       padding: 0;
     }
 
-    /* Diff */
+    /* ── Diff ── */
     .diff-view {
       max-width: 720px;
       margin: 0 auto;
@@ -416,46 +439,18 @@
       line-height: 1.7;
     }
 
-    .diff-line {
-      padding: 1px 12px;
-      border-radius: 3px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
+    .diff-line { padding: 1px 12px; border-radius: 3px; white-space: pre-wrap; word-break: break-word; }
     .diff-add { background: var(--green-bg); color: var(--green); }
     .diff-remove { background: var(--red-bg); color: var(--red); }
     .diff-context { color: var(--muted); }
 
-    .diff-stats {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 12px;
-      font-size: 12px;
-    }
-
+    .diff-stats { display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; }
     .diff-stats .additions { color: var(--green); }
     .diff-stats .deletions { color: var(--red); }
 
-    .no-changes {
-      color: var(--muted);
-      text-align: center;
-      padding: 40px 0;
-      font-size: 14px;
-    }
+    .no-changes { color: var(--muted); text-align: center; padding: 40px 0; font-size: 14px; }
 
-    /* Change indicator */
-    .change-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: none;
-    }
-
-    .change-dot.visible { display: inline-block; }
-
-    /* Toast */
+    /* ── Toast ── */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -464,53 +459,53 @@
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 8px 20px;
+      border-radius: var(--radius);
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12px;
       transition: transform 0.3s ease;
       z-index: 200;
+      box-shadow: var(--shadow);
     }
 
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Mobile sidebar overlay */
+    /* ── Overlay ── */
     .sidebar-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: var(--overlay);
       z-index: 50;
     }
 
-    /* Responsive */
+    /* ── Responsive ── */
     @media (max-width: 768px) {
       .sidebar {
         position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
+        top: 0; left: 0; bottom: 0;
         z-index: 60;
         margin-left: 0;
       }
 
-      .sidebar.hidden {
-        margin-left: calc(var(--sidebar-w) * -1);
-      }
+      .sidebar.hidden { margin-left: calc(var(--sidebar-w) * -1); }
+      .sidebar:not(.hidden) + .sidebar-overlay { display: block; }
 
-      .sidebar:not(.hidden) + .sidebar-overlay {
-        display: block;
-      }
-
-      header { padding: 10px 14px; }
-      .panel { padding: 20px 14px; }
+      header { padding: 0 12px; height: 44px; gap: 8px; }
+      .panel { padding: 20px 16px; }
       .rendered { font-size: 15px; }
-      .filename { max-width: 120px; }
-      .btn { padding: 6px 10px; font-size: 11px; }
-      .tab { padding: 5px 8px; font-size: 11px; }
+      .btn { padding: 5px 10px; font-size: 10px; }
+      .tab { padding: 4px 10px; font-size: 10px; }
+      .header-right .label { display: none; }
     }
 
-    /* File input hidden */
+    @media (max-width: 400px) {
+      .drop-zone { padding: 32px 20px; }
+      .empty-actions { flex-direction: column; align-items: stretch; }
+      .empty-actions .btn { text-align: center; }
+    }
+
+    /* Hidden */
     #file-input { display: none; }
 
     /* Scrollbar */
@@ -522,36 +517,40 @@
 <body>
 
   <header>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <span class="logo" id="toggle-sidebar" title="Toggle sidebar">markdiff</span>
+    <div class="header-left">
+      <span class="logo" id="toggle-sidebar" title="Toggle sidebar (Cmd+B)">markdiff</span>
       <span class="filename" id="filename"></span>
       <span class="change-dot" id="change-dot" title="Unsaved changes"></span>
     </div>
 
-    <div class="tabs" id="view-tabs" style="display:none;">
-      <button class="tab active" data-view="read">Read</button>
-      <button class="tab" data-view="edit">Edit</button>
-      <button class="tab" data-view="diff">Diff</button>
+    <div class="header-center">
+      <div class="tabs" id="view-tabs" style="display:none;">
+        <button class="tab active" data-view="read">Read</button>
+        <button class="tab" data-view="edit">Edit</button>
+        <button class="tab" data-view="diff">Diff</button>
+      </div>
     </div>
 
-    <div class="header-actions">
-      <button class="btn" id="paste-btn" title="Paste markdown from clipboard">Paste</button>
-      <button class="btn" id="folder-btn">Folder</button>
+    <div class="header-right">
+      <button class="btn" id="paste-btn" title="Paste from clipboard">Paste</button>
+      <button class="btn" id="folder-btn"><span class="label">Folder</span><span style="display:none" class="mobile-only">F</span></button>
       <button class="btn primary" id="open-btn">Open</button>
-      <button class="btn" id="copy-btn" style="display:none;" title="Copy current content">Copy</button>
-      <button class="btn" id="copy-diff-btn" style="display:none;" title="Copy diff to send back to Claude">Copy Diff</button>
+      <button class="btn" id="copy-btn" style="display:none;" title="Copy edited content">Copy</button>
+      <button class="btn" id="copy-diff-btn" style="display:none;" title="Copy diff for Claude">Diff</button>
       <button class="btn" id="save-btn" style="display:none;">Save</button>
+      <button class="btn-icon" id="theme-btn" title="Toggle light/dark">
+        <span id="theme-icon">&#9789;</span>
+      </button>
     </div>
   </header>
 
   <input type="file" id="file-input" accept=".md,.markdown,.txt,.mdx">
 
   <div class="app-body">
-    <!-- Sidebar -->
     <aside class="sidebar hidden" id="sidebar">
       <div class="sidebar-header">
         <span class="folder-name" id="folder-name">No folder open</span>
-        <button class="btn" id="change-folder-btn" style="padding:4px 8px; font-size:11px;">Change</button>
+        <button class="btn" id="change-folder-btn" style="padding:3px 8px; font-size:10px;">Change</button>
       </div>
       <div class="sidebar-search">
         <input type="text" id="file-search" placeholder="Filter files...">
@@ -561,11 +560,10 @@
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <main>
-      <!-- Empty state -->
       <div class="empty-state" id="empty-state">
         <div class="drop-zone" id="drop-zone">
           <div class="icon">◇</div>
-          <p>Paste markdown from Claude, drop a file, or open a folder. Edit it, then copy the diff back.</p>
+          <p>Paste markdown from Claude, drop a file, or open a folder. Edit and copy the diff back.</p>
           <div class="empty-actions">
             <button class="btn primary" id="empty-paste-btn">Paste from Claude</button>
             <button class="btn" id="empty-open-btn">Open File</button>
@@ -574,17 +572,14 @@
         </div>
       </div>
 
-      <!-- Read panel -->
       <div class="panel" id="panel-read">
         <div class="rendered" id="rendered-content"></div>
       </div>
 
-      <!-- Edit panel -->
       <div class="panel" id="panel-edit">
         <textarea class="editor" id="editor" spellcheck="true"></textarea>
       </div>
 
-      <!-- Diff panel -->
       <div class="panel" id="panel-diff">
         <div class="diff-view" id="diff-content"></div>
       </div>
@@ -601,40 +596,67 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/diff/dist/diff.min.js"></script>
   <script>
-    // State
+    // ── State ──
     let originalContent = '';
     let currentContent = '';
     let currentFilename = '';
     let currentView = 'read';
     let fileHandle = null;
     let dirHandle = null;
-    let fileTree = []; // { path, name, handle, depth, isDir, expanded }
-    let fileHandles = new Map(); // path -> { handle, original }
+    let fileTree = [];
+    let fileHandles = new Map();
     let activeFilePath = null;
     let modifiedFiles = new Set();
 
-    // Elements
-    const fileInput = document.getElementById('file-input');
-    const openBtn = document.getElementById('open-btn');
-    const saveBtn = document.getElementById('save-btn');
-    const folderBtn = document.getElementById('folder-btn');
-    const emptyState = document.getElementById('empty-state');
-    const viewTabs = document.getElementById('view-tabs');
-    const filenameEl = document.getElementById('filename');
-    const changeDot = document.getElementById('change-dot');
-    const renderedContent = document.getElementById('rendered-content');
-    const editor = document.getElementById('editor');
-    const diffContent = document.getElementById('diff-content');
-    const dropZone = document.getElementById('drop-zone');
-    const toastEl = document.getElementById('toast');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const folderNameEl = document.getElementById('folder-name');
-    const fileListEl = document.getElementById('file-list');
-    const fileSearch = document.getElementById('file-search');
+    // ── Elements ──
+    const $ = id => document.getElementById(id);
+    const fileInput = $('file-input');
+    const openBtn = $('open-btn');
+    const saveBtn = $('save-btn');
+    const folderBtn = $('folder-btn');
+    const emptyState = $('empty-state');
+    const viewTabs = $('view-tabs');
+    const filenameEl = $('filename');
+    const changeDot = $('change-dot');
+    const renderedContent = $('rendered-content');
+    const editor = $('editor');
+    const diffContent = $('diff-content');
+    const dropZone = $('drop-zone');
+    const toastEl = $('toast');
+    const sidebar = $('sidebar');
+    const sidebarOverlay = $('sidebar-overlay');
+    const folderNameEl = $('folder-name');
+    const fileListEl = $('file-list');
+    const fileSearch = $('file-search');
+    const pasteBtn = $('paste-btn');
+    const copyBtn = $('copy-btn');
+    const copyDiffBtn = $('copy-diff-btn');
+    const themeBtn = $('theme-btn');
+    const themeIcon = $('theme-icon');
 
-    // Configure marked
     marked.setOptions({ breaks: true, gfm: true });
+
+    // ── Theme ──
+
+    function getTheme() {
+      return localStorage.getItem('markdiff-theme') ||
+        (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem('markdiff-theme', theme);
+      themeIcon.textContent = theme === 'dark' ? '\u263D' : '\u2600';
+      // Update meta theme-color for PWA
+      document.querySelector('meta[name="theme-color"]').content =
+        theme === 'dark' ? '#0a0a0a' : '#fafaf9';
+    }
+
+    setTheme(getTheme());
+
+    themeBtn.addEventListener('click', () => {
+      setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+    });
 
     // ── Folder browsing ──
 
@@ -650,7 +672,6 @@
         toast('Could not open folder');
         return;
       }
-
       folderNameEl.textContent = dirHandle.name;
       sidebar.classList.remove('hidden');
       await scanDirectory();
@@ -669,22 +690,16 @@
 
     async function walkDir(handle, prefix, depth) {
       const entries = [];
-      for await (const entry of handle.values()) {
-        entries.push(entry);
-      }
+      for await (const entry of handle.values()) entries.push(entry);
       entries.sort((a, b) => a.name.localeCompare(b.name));
 
       for (const entry of entries) {
-        // Skip hidden files/dirs
         if (entry.name.startsWith('.')) continue;
-
         const path = prefix ? `${prefix}/${entry.name}` : entry.name;
 
         if (entry.kind === 'directory') {
           fileTree.push({ path, name: entry.name, handle: entry, depth, isDir: true, expanded: depth === 0 });
-          if (depth < 3) {
-            await walkDir(entry, path, depth + 1);
-          }
+          if (depth < 3) await walkDir(entry, path, depth + 1);
         } else if (/\.(md|markdown|mdx|txt)$/i.test(entry.name)) {
           fileTree.push({ path, name: entry.name, handle: entry, depth, isDir: false });
           fileHandles.set(path, { handle: entry, original: null });
@@ -693,64 +708,48 @@
     }
 
     function renderFileList(filter = '') {
-      const lowerFilter = filter.toLowerCase();
+      const lf = filter.toLowerCase();
       let html = '';
-      const expandedDirs = new Set(fileTree.filter(f => f.isDir && f.expanded).map(f => f.path));
+      const expanded = new Set(fileTree.filter(f => f.isDir && f.expanded).map(f => f.path));
 
       for (const item of fileTree) {
-        // Check if parent dir is expanded
         if (item.depth > 0) {
-          const parentPath = item.path.substring(0, item.path.lastIndexOf('/'));
-          if (!expandedDirs.has(parentPath)) continue;
+          const parent = item.path.substring(0, item.path.lastIndexOf('/'));
+          if (!expanded.has(parent)) continue;
         }
-
-        if (filter && !item.isDir && !item.name.toLowerCase().includes(lowerFilter)) continue;
+        if (filter && !item.isDir && !item.name.toLowerCase().includes(lf)) continue;
 
         const indent = item.depth * 16;
-
         if (item.isDir) {
-          const arrow = item.expanded ? 'open' : '';
-          html += `<div class="folder-toggle" style="padding-left:${14 + indent}px" data-path="${item.path}">
-            <span class="arrow ${arrow}">▶</span> ${escapeHtml(item.name)}
+          html += `<div class="folder-toggle" style="padding-left:${12 + indent}px" data-path="${item.path}">
+            <span class="arrow ${item.expanded ? 'open' : ''}">&#9654;</span> ${escapeHtml(item.name)}
           </div>`;
         } else {
-          const isActive = item.path === activeFilePath;
-          const isModified = modifiedFiles.has(item.path);
-          html += `<div class="file-item ${isActive ? 'active' : ''}" style="padding-left:${14 + indent}px" data-path="${item.path}">
-            <span class="modified-dot ${isModified ? 'visible' : ''}"></span>
+          const active = item.path === activeFilePath;
+          const mod = modifiedFiles.has(item.path);
+          html += `<div class="file-item ${active ? 'active' : ''}" style="padding-left:${12 + indent}px" data-path="${item.path}">
+            <span class="modified-dot ${mod ? 'visible' : ''}"></span>
             <span class="file-label">${escapeHtml(item.name)}</span>
           </div>`;
         }
       }
 
-      if (!html) {
-        html = '<div style="padding:20px 14px; color:var(--muted); font-size:12px; font-family:var(--font-mono);">No markdown files found</div>';
-      }
+      fileListEl.innerHTML = html || '<div style="padding:20px 12px; color:var(--muted); font-size:11px; font-family:var(--font-mono);">No markdown files found</div>';
 
-      fileListEl.innerHTML = html;
-
-      // Bind clicks
       fileListEl.querySelectorAll('.file-item').forEach(el => {
         el.addEventListener('click', () => openFileFromTree(el.dataset.path));
       });
       fileListEl.querySelectorAll('.folder-toggle').forEach(el => {
-        el.addEventListener('click', () => toggleFolder(el.dataset.path));
+        el.addEventListener('click', () => {
+          const item = fileTree.find(f => f.path === el.dataset.path && f.isDir);
+          if (item) { item.expanded = !item.expanded; renderFileList(fileSearch.value); }
+        });
       });
     }
 
-    function toggleFolder(path) {
-      const item = fileTree.find(f => f.path === path && f.isDir);
-      if (item) {
-        item.expanded = !item.expanded;
-        renderFileList(fileSearch.value);
-      }
-    }
-
     async function openFileFromTree(path) {
-      // Save current edits before switching
       if (activeFilePath && currentContent !== originalContent) {
         modifiedFiles.add(activeFilePath);
-        // Store edited content
         const entry = fileHandles.get(activeFilePath);
         if (entry) entry.editedContent = currentContent;
       }
@@ -761,74 +760,42 @@
       try {
         const file = await entry.handle.getFile();
         const text = await file.text();
-
-        // Store original if first time opening
         if (entry.original === null) entry.original = text;
 
         activeFilePath = path;
         fileHandle = entry.handle;
         currentFilename = entry.handle.name;
-
-        // Use edited content if we have it, otherwise the file
         originalContent = entry.original;
         currentContent = entry.editedContent !== undefined ? entry.editedContent : text;
 
-        filenameEl.textContent = currentFilename;
-        emptyState.style.display = 'none';
-        viewTabs.style.display = 'flex';
-        saveBtn.style.display = 'inline-flex';
+        showFileUI();
+        if (currentView === 'edit') editor.value = currentContent;
+        else if (currentView === 'diff') renderDiff();
+        else switchView('read');
 
-        render();
-        showCopyButtons();
-        if (currentView === 'edit') {
-          editor.value = currentContent;
-        } else if (currentView === 'diff') {
-          renderDiff();
-        } else {
-          switchView('read');
-        }
         updateChangeDot();
         renderFileList(fileSearch.value);
-
-        // Close sidebar on mobile
-        if (window.innerWidth <= 768) {
-          sidebar.classList.add('hidden');
-        }
+        if (window.innerWidth <= 768) sidebar.classList.add('hidden');
       } catch (e) {
         toast('Could not read file');
       }
     }
 
-    // Search files
     fileSearch.addEventListener('input', () => renderFileList(fileSearch.value));
-
-    // Folder buttons
     folderBtn.addEventListener('click', openFolder);
-    document.getElementById('empty-folder-btn').addEventListener('click', openFolder);
-    document.getElementById('change-folder-btn').addEventListener('click', openFolder);
-    document.getElementById('empty-open-btn').addEventListener('click', () => openBtn.click());
+    $('empty-folder-btn').addEventListener('click', openFolder);
+    $('change-folder-btn').addEventListener('click', openFolder);
+    $('empty-open-btn').addEventListener('click', () => openBtn.click());
 
-    // Toggle sidebar
-    document.getElementById('toggle-sidebar').addEventListener('click', () => {
-      sidebar.classList.toggle('hidden');
-    });
-    sidebarOverlay.addEventListener('click', () => {
-      sidebar.classList.add('hidden');
-    });
+    $('toggle-sidebar').addEventListener('click', () => sidebar.classList.toggle('hidden'));
+    sidebarOverlay.addEventListener('click', () => sidebar.classList.add('hidden'));
 
-    // ── Paste from clipboard (Claude workflow) ──
-
-    const pasteBtn = document.getElementById('paste-btn');
-    const copyBtn = document.getElementById('copy-btn');
-    const copyDiffBtn = document.getElementById('copy-diff-btn');
+    // ── Paste / Copy ──
 
     async function pasteFromClipboard() {
       try {
         const text = await navigator.clipboard.readText();
-        if (!text.trim()) {
-          toast('Clipboard is empty');
-          return;
-        }
+        if (!text.trim()) { toast('Clipboard is empty'); return; }
         originalContent = text;
         currentContent = text;
         currentFilename = 'clipboard.md';
@@ -836,65 +803,50 @@
         fileHandle = null;
 
         filenameEl.textContent = 'Pasted from clipboard';
-        emptyState.style.display = 'none';
-        viewTabs.style.display = 'flex';
-        saveBtn.style.display = 'inline-flex';
-        copyBtn.style.display = 'inline-flex';
-        copyDiffBtn.style.display = 'inline-flex';
-
+        showFileUI();
         render();
         switchView('read');
         updateChangeDot();
-        toast('Pasted — edit and check Diff when done');
+        toast('Pasted \u2014 edit and check Diff when done');
       } catch (e) {
         toast('Could not read clipboard');
       }
     }
 
     pasteBtn.addEventListener('click', pasteFromClipboard);
-    document.getElementById('empty-paste-btn').addEventListener('click', pasteFromClipboard);
+    $('empty-paste-btn').addEventListener('click', pasteFromClipboard);
 
-    // Copy edited content
     copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(currentContent);
-        toast('Copied edited content');
-      } catch (e) {
-        toast('Could not copy');
-      }
+      try { await navigator.clipboard.writeText(currentContent); toast('Copied'); }
+      catch (e) { toast('Could not copy'); }
     });
 
-    // Copy diff as text (paste into Claude to show your changes)
     copyDiffBtn.addEventListener('click', async () => {
-      if (originalContent === currentContent) {
-        toast('No changes to copy');
-        return;
-      }
+      if (originalContent === currentContent) { toast('No changes'); return; }
       const diff = Diff.diffLines(originalContent, currentContent);
-      let diffText = `Here are my edits to your markdown:\n\n\`\`\`diff\n`;
+      let t = 'Here are my edits to your markdown:\n\n```diff\n';
       diff.forEach(part => {
         const lines = part.value.split('\n');
         if (lines[lines.length - 1] === '') lines.pop();
         lines.forEach(line => {
-          if (part.added) diffText += `+ ${line}\n`;
-          else if (part.removed) diffText += `- ${line}\n`;
-          else diffText += `  ${line}\n`;
+          if (part.added) t += `+ ${line}\n`;
+          else if (part.removed) t += `- ${line}\n`;
+          else t += `  ${line}\n`;
         });
       });
-      diffText += '```';
-
-      try {
-        await navigator.clipboard.writeText(diffText);
-        toast('Diff copied — paste into Claude');
-      } catch (e) {
-        toast('Could not copy');
-      }
+      t += '```';
+      try { await navigator.clipboard.writeText(t); toast('Diff copied \u2014 paste into Claude'); }
+      catch (e) { toast('Could not copy'); }
     });
 
-    // Show copy buttons when file is loaded
-    function showCopyButtons() {
+    function showFileUI() {
+      filenameEl.textContent = currentFilename;
+      emptyState.style.display = 'none';
+      viewTabs.style.display = 'flex';
+      saveBtn.style.display = 'inline-flex';
       copyBtn.style.display = 'inline-flex';
       copyDiffBtn.style.display = 'inline-flex';
+      render();
     }
 
     // ── Single file open ──
@@ -909,38 +861,22 @@
           const file = await handle.getFile();
           await loadFile(file);
           return;
-        } catch (e) {
-          if (e.name === 'AbortError') return;
-        }
+        } catch (e) { if (e.name === 'AbortError') return; }
       }
       fileInput.click();
     });
 
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files[0]) {
-        fileHandle = null;
-        loadFile(e.target.files[0]);
-      }
+      if (e.target.files[0]) { fileHandle = null; loadFile(e.target.files[0]); }
     });
 
-    // Drag and drop
-    document.body.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone?.classList.add('over');
-    });
-
-    document.body.addEventListener('dragleave', () => {
-      dropZone?.classList.remove('over');
-    });
-
+    document.body.addEventListener('dragover', (e) => { e.preventDefault(); dropZone?.classList.add('over'); });
+    document.body.addEventListener('dragleave', () => { dropZone?.classList.remove('over'); });
     document.body.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZone?.classList.remove('over');
       const file = e.dataTransfer.files[0];
-      if (file && /\.(md|markdown|mdx|txt)$/i.test(file.name)) {
-        fileHandle = null;
-        loadFile(file);
-      }
+      if (file && /\.(md|markdown|mdx|txt)$/i.test(file.name)) { fileHandle = null; loadFile(file); }
     });
 
     async function loadFile(file) {
@@ -949,14 +885,7 @@
       currentContent = text;
       currentFilename = file.name;
       activeFilePath = null;
-
-      filenameEl.textContent = file.name;
-      emptyState.style.display = 'none';
-      viewTabs.style.display = 'flex';
-      saveBtn.style.display = 'inline-flex';
-
-      render();
-      showCopyButtons();
+      showFileUI();
       switchView('read');
       updateChangeDot();
     }
@@ -972,122 +901,73 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
 
-      if (view === 'read') {
-        render();
-        document.getElementById('panel-read').classList.add('visible');
-      } else if (view === 'edit') {
-        editor.value = currentContent;
-        document.getElementById('panel-edit').classList.add('visible');
-        editor.focus();
-      } else if (view === 'diff') {
-        renderDiff();
-        document.getElementById('panel-diff').classList.add('visible');
-      }
+      if (view === 'read') { render(); $('panel-read').classList.add('visible'); }
+      else if (view === 'edit') { editor.value = currentContent; $('panel-edit').classList.add('visible'); editor.focus(); }
+      else if (view === 'diff') { renderDiff(); $('panel-diff').classList.add('visible'); }
     }
 
-    function render() {
-      renderedContent.innerHTML = marked.parse(currentContent);
-    }
+    function render() { renderedContent.innerHTML = marked.parse(currentContent); }
 
-    // Editor input
     editor.addEventListener('input', () => {
       currentContent = editor.value;
       updateChangeDot();
       if (activeFilePath) {
         const entry = fileHandles.get(activeFilePath);
         if (entry) entry.editedContent = currentContent;
-        if (currentContent !== originalContent) {
-          modifiedFiles.add(activeFilePath);
-        } else {
-          modifiedFiles.delete(activeFilePath);
-        }
+        if (currentContent !== originalContent) modifiedFiles.add(activeFilePath);
+        else modifiedFiles.delete(activeFilePath);
         renderFileList(fileSearch.value);
       }
     });
 
-    // Diff
     function renderDiff() {
       if (originalContent === currentContent) {
         diffContent.innerHTML = '<div class="no-changes">No changes from original</div>';
         return;
       }
-
       const diff = Diff.diffLines(originalContent, currentContent);
-      let additions = 0;
-      let deletions = 0;
-      let html = '';
-
+      let add = 0, del = 0, html = '';
       diff.forEach(part => {
         const lines = part.value.split('\n');
         if (lines[lines.length - 1] === '') lines.pop();
-
         lines.forEach(line => {
-          const escaped = escapeHtml(line);
-          if (part.added) {
-            additions++;
-            html += `<div class="diff-line diff-add">+ ${escaped}</div>`;
-          } else if (part.removed) {
-            deletions++;
-            html += `<div class="diff-line diff-remove">- ${escaped}</div>`;
-          } else {
-            html += `<div class="diff-line diff-context">  ${escaped}</div>`;
-          }
+          const esc = escapeHtml(line);
+          if (part.added) { add++; html += `<div class="diff-line diff-add">+ ${esc}</div>`; }
+          else if (part.removed) { del++; html += `<div class="diff-line diff-remove">- ${esc}</div>`; }
+          else html += `<div class="diff-line diff-context">  ${esc}</div>`;
         });
       });
-
-      diffContent.innerHTML = `
-        <div class="diff-stats">
-          <span class="additions">+${additions} added</span>
-          <span class="deletions">-${deletions} removed</span>
-        </div>
-      ` + html;
+      diffContent.innerHTML = `<div class="diff-stats"><span class="additions">+${add} added</span><span class="deletions">-${del} removed</span></div>` + html;
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function updateChangeDot() {
-      changeDot.classList.toggle('visible', originalContent !== currentContent);
-    }
+    function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+    function updateChangeDot() { changeDot.classList.toggle('visible', originalContent !== currentContent); }
 
     // ── Save ──
 
     saveBtn.addEventListener('click', async () => {
-      // Try writing back via File System Access
       const handle = activeFilePath ? fileHandles.get(activeFilePath)?.handle : fileHandle;
       if (handle && handle.createWritable) {
         try {
-          const writable = await handle.createWritable();
-          await writable.write(currentContent);
-          await writable.close();
+          const w = await handle.createWritable();
+          await w.write(currentContent);
+          await w.close();
           originalContent = currentContent;
           if (activeFilePath) {
             const entry = fileHandles.get(activeFilePath);
-            if (entry) {
-              entry.original = currentContent;
-              delete entry.editedContent;
-            }
+            if (entry) { entry.original = currentContent; delete entry.editedContent; }
             modifiedFiles.delete(activeFilePath);
             renderFileList(fileSearch.value);
           }
           updateChangeDot();
           toast('Saved');
           return;
-        } catch (e) {
-          // Fall through to download
-        }
+        } catch (e) {}
       }
-
-      // Fallback: download
       const blob = new Blob([currentContent], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = currentFilename || 'document.md';
-      a.click();
+      a.href = url; a.download = currentFilename || 'document.md'; a.click();
       URL.revokeObjectURL(url);
       originalContent = currentContent;
       updateChangeDot();
@@ -1097,25 +977,15 @@
     // ── Keyboard shortcuts ──
 
     document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        saveBtn.click();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
-        e.preventDefault();
-        openBtn.click();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === '1') { e.preventDefault(); switchView('read'); }
-      if ((e.metaKey || e.ctrlKey) && e.key === '2') { e.preventDefault(); switchView('edit'); }
-      if ((e.metaKey || e.ctrlKey) && e.key === '3') { e.preventDefault(); switchView('diff'); }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
-        e.preventDefault();
-        sidebar.classList.toggle('hidden');
-      }
-      // Navigate files with arrow keys when sidebar focused
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === 's') { e.preventDefault(); saveBtn.click(); }
+      if (mod && e.key === 'o') { e.preventDefault(); openBtn.click(); }
+      if (mod && e.key === '1') { e.preventDefault(); switchView('read'); }
+      if (mod && e.key === '2') { e.preventDefault(); switchView('edit'); }
+      if (mod && e.key === '3') { e.preventDefault(); switchView('diff'); }
+      if (mod && e.key === 'b') { e.preventDefault(); sidebar.classList.toggle('hidden'); }
     });
 
-    // Toast
     function toast(msg) {
       toastEl.textContent = msg;
       toastEl.classList.add('show');

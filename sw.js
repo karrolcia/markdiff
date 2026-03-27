@@ -1,4 +1,4 @@
-const CACHE = 'markdiff-v1';
+const CACHE = 'markdiff-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -21,8 +21,22 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// Network-first for HTML, cache-first for CDN assets
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
+  const url = new URL(e.request.url);
+  if (url.origin === location.origin) {
+    // Network first for local files (so updates propagate)
+    e.respondWith(
+      fetch(e.request).then(r => {
+        const clone = r.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return r;
+      }).catch(() => caches.match(e.request))
+    );
+  } else {
+    // Cache first for CDN
+    e.respondWith(
+      caches.match(e.request).then(r => r || fetch(e.request))
+    );
+  }
 });
