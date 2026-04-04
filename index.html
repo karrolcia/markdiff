@@ -8,7 +8,10 @@
   <meta name="theme-color" content="#0a0a0a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◇</text></svg>">
+  <meta name="apple-mobile-web-app-title" content="Markdiff">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon-192.png" type="image/png">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -635,6 +638,29 @@
     const themeIcon = $('theme-icon');
 
     marked.setOptions({ breaks: true, gfm: true });
+
+    // Check for shared file (Web Share Target on mobile)
+    if (location.search.includes('shared=1')) {
+      (async () => {
+        try {
+          const cache = await caches.open('markdiff-shared');
+          const resp = await cache.match('/_shared_file');
+          if (resp) {
+            const { name, content } = await resp.json();
+            await cache.delete('/_shared_file');
+            originalContent = content;
+            currentContent = content;
+            currentFilename = name;
+            showFileUI();
+            switchView('read');
+            updateChangeDot();
+            toast('Opened shared file');
+            // Clean up URL
+            history.replaceState(null, '', location.pathname);
+          }
+        } catch (e) {}
+      })();
+    }
 
     // ── Theme ──
 

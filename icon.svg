@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <path d="M256 128 L336 256 L256 384 L176 256 Z" fill="none" stroke="#e8009a" stroke-width="16" stroke-linejoin="round"/>
+  <text x="256" y="460" text-anchor="middle" font-family="monospace" font-weight="500" font-size="72" fill="#e8e0d4" letter-spacing="-3">markdiff</text>
+</svg>

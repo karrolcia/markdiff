@@ -1,21 +1,44 @@
 {
   "name": "Markdiff",
   "short_name": "Markdiff",
-  "description": "Simple markdown reader and editor with diff tracking",
-  "start_url": "/",
+  "description": "Markdown reader and editor with diff tracking",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
-  ]
+  ],
+  "share_target": {
+    "action": ".",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "file",
+          "accept": [".md", ".markdown", ".txt", ".mdx", "text/markdown", "text/plain"]
+        }
+      ]
+    }
+  }
 }
