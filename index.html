@@ -535,6 +535,7 @@
     </div>
 
     <div class="header-right">
+      <button class="btn" id="new-btn" title="New file (Cmd+N)">New</button>
       <button class="btn" id="paste-btn" title="Paste from clipboard">Paste</button>
       <button class="btn" id="folder-btn"><span class="label">Folder</span><span style="display:none" class="mobile-only">F</span></button>
       <button class="btn primary" id="open-btn">Open</button>
@@ -816,6 +817,35 @@
     $('toggle-sidebar').addEventListener('click', () => sidebar.classList.toggle('hidden'));
     sidebarOverlay.addEventListener('click', () => sidebar.classList.add('hidden'));
 
+    // ── New file ──
+
+    const newBtn = $('new-btn');
+
+    function newFile() {
+      // Stash current edits if in a folder
+      if (activeFilePath && currentContent !== originalContent) {
+        modifiedFiles.add(activeFilePath);
+        const entry = fileHandles.get(activeFilePath);
+        if (entry) entry.editedContent = currentContent;
+      }
+
+      originalContent = '';
+      currentContent = '';
+      currentFilename = 'untitled.md';
+      activeFilePath = null;
+      fileHandle = null;
+
+      filenameEl.textContent = 'untitled.md';
+      showFileUI();
+      switchView('edit');
+      editor.value = '';
+      editor.focus();
+      updateChangeDot();
+      if (dirHandle) renderFileList(fileSearch.value);
+    }
+
+    newBtn.addEventListener('click', newFile);
+
     // ── Paste / Copy ──
 
     async function pasteFromClipboard() {
@@ -990,10 +1020,31 @@
           return;
         } catch (e) {}
       }
+      // No existing handle — try Save As picker (desktop Chrome/Edge/Arc)
+      if ('showSaveFilePicker' in window) {
+        try {
+          const newHandle = await window.showSaveFilePicker({
+            suggestedName: currentFilename || 'untitled.md',
+            types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }],
+          });
+          const w = await newHandle.createWritable();
+          await w.write(currentContent);
+          await w.close();
+          fileHandle = newHandle;
+          currentFilename = newHandle.name;
+          filenameEl.textContent = currentFilename;
+          originalContent = currentContent;
+          updateChangeDot();
+          toast('Saved');
+          return;
+        } catch (e) { if (e.name === 'AbortError') return; }
+      }
+
+      // Fallback: download
       const blob = new Blob([currentContent], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = currentFilename || 'document.md'; a.click();
+      a.href = url; a.download = currentFilename || 'untitled.md'; a.click();
       URL.revokeObjectURL(url);
       originalContent = currentContent;
       updateChangeDot();
@@ -1006,6 +1057,7 @@
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key === 's') { e.preventDefault(); saveBtn.click(); }
       if (mod && e.key === 'o') { e.preventDefault(); openBtn.click(); }
+      if (mod && e.key === 'n') { e.preventDefault(); newFile(); }
       if (mod && e.key === '1') { e.preventDefault(); switchView('read'); }
       if (mod && e.key === '2') { e.preventDefault(); switchView('edit'); }
       if (mod && e.key === '3') { e.preventDefault(); switchView('diff'); }
