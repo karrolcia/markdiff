@@ -583,6 +583,7 @@
 
   <script src="lib/marked.min.js"></script>
   <script src="lib/diff.min.js"></script>
+  <script src="lib/purify.min.js"></script>
   <script>
     // ── Tauri APIs ──
     const { open: openDialog, save: saveDialog } = window.__TAURI__.dialog;
@@ -719,13 +720,13 @@
 
         const indent = item.depth * 16;
         if (item.isDir) {
-          html += `<div class="folder-toggle" style="padding-left:${12 + indent}px" data-path="${item.path}">
+          html += `<div class="folder-toggle" style="padding-left:${12 + indent}px" data-path="${escapeAttr(item.path)}">
             <span class="arrow ${item.expanded ? 'open' : ''}">&#9654;</span> ${escapeHtml(item.name)}
           </div>`;
         } else {
           const active = item.path === activeFilePath;
           const mod = modifiedFiles.has(item.path);
-          html += `<div class="file-item ${active ? 'active' : ''}" style="padding-left:${12 + indent}px" data-path="${item.path}">
+          html += `<div class="file-item ${active ? 'active' : ''}" style="padding-left:${12 + indent}px" data-path="${escapeAttr(item.path)}">
             <span class="modified-dot ${mod ? 'visible' : ''}"></span>
             <span class="file-label">${escapeHtml(item.name)}</span>
           </div>`;
@@ -1027,7 +1028,12 @@
       else if (view === 'diff') { renderDiff(); $('panel-diff').classList.add('visible'); }
     }
 
-    function render() { renderedContent.innerHTML = marked.parse(currentContent); }
+    // Markdown allows raw HTML, so a hostile .md can carry <script>, inline
+    // on* handlers or javascript: URLs straight into this webview — which holds
+    // readTextFile/writeTextFile. Sanitize at the sink, on the RENDER OUTPUT
+    // ONLY: currentContent/originalContent must stay raw so the editor, stash,
+    // diff and every save path keep the author's exact bytes.
+    function render() { renderedContent.innerHTML = DOMPurify.sanitize(marked.parse(currentContent)); }
 
     editor.addEventListener('input', () => {
       currentContent = editor.value;
@@ -1062,6 +1068,12 @@
     }
 
     function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+    // escapeHtml is safe for TEXT context only: HTML serialization escapes
+    // & < > but leaves quotes alone. A value going into a quoted attribute
+    // needs the quote escaped too, or a filename containing `"` closes the
+    // attribute early and injects its own. Reading it back via el.dataset
+    // decodes the entity, so the round-trip value is unchanged.
+    function escapeAttr(text) { return escapeHtml(text).replace(/"/g, '&quot;'); }
     function updateChangeDot() { changeDot.classList.toggle('visible', originalContent !== currentContent); }
 
     // ── Save (Tauri) ──
