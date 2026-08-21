@@ -602,6 +602,7 @@
     let fileEntries = new Map(); // path → { original, editedContent }
     let activeFilePath = null;
     let modifiedFiles = new Set();
+    let stashes = new Map(); // absolute path → { original, editedContent }
 
     // ── Elements ──
     const $ = id => document.getElementById(id);
@@ -744,12 +745,53 @@
       });
     }
 
-    async function openFileFromTree(relPath) {
-      if (activeFilePath && currentContent !== originalContent) {
-        modifiedFiles.add(activeFilePath);
-        const entry = fileEntries.get(activeFilePath);
+    // ── Unsaved-edit stash ──
+    // Parks unsaved edits when navigating away from a file, so switching files
+    // never silently loses work. Keyed by ABSOLUTE path — the only key that
+    // unifies a file reached through the folder tree (which keys by path
+    // relative to the folder root) with the same file opened from Finder,
+    // drag-drop, or the Open button. Deliberately a separate map from
+    // fileEntries, which scanDirectory() clears on every folder scan.
+    // In memory only, session-scoped: quitting the app drops the stashes.
+
+    function treeRelPathFor(fullPath) {
+      for (const [relPath, entry] of fileEntries) {
+        if (entry.fullPath === fullPath) return relPath;
+      }
+      return null;
+    }
+
+    function stashCurrentEdits() {
+      if (!currentFilePath) return;
+      if (currentContent === originalContent) {
+        // Nothing unsaved any more — the edits were saved, or the user undid
+        // them by hand. Drop any parked copy, otherwise reopening this file
+        // later would resurrect edits that were deliberately reverted.
+        stashes.delete(currentFilePath);
+        return;
+      }
+      stashes.set(currentFilePath, { original: originalContent, editedContent: currentContent });
+
+      // Keep the sidebar in step when this file is also in the open folder tree.
+      const relPath = activeFilePath || treeRelPathFor(currentFilePath);
+      if (relPath) {
+        modifiedFiles.add(relPath);
+        const entry = fileEntries.get(relPath);
         if (entry) entry.editedContent = currentContent;
       }
+    }
+
+    function stashedEditsFor(filePath, diskText) {
+      const stash = stashes.get(filePath);
+      if (!stash) return null;
+      // The file changed on disk since these edits were parked, so the baseline
+      // they diff against is gone. Disk wins and the stale stash is dropped.
+      if (stash.original !== diskText) { stashes.delete(filePath); return null; }
+      return stash;
+    }
+
+    async function openFileFromTree(relPath) {
+      stashCurrentEdits();
 
       const entry = fileEntries.get(relPath);
       if (!entry) return;
@@ -758,6 +800,17 @@
         const text = await readTextFile(entry.fullPath);
         if (entry.original === null) entry.original = text;
 
+        // A folder rescan clears fileEntries, so edits parked from single-file
+        // mode may survive only in the path-keyed stash. Adopt them back in.
+        if (entry.editedContent === undefined) {
+          const stash = stashedEditsFor(entry.fullPath, text);
+          if (stash) {
+            entry.original = stash.original;
+            entry.editedContent = stash.editedContent;
+            modifiedFiles.add(relPath);
+          }
+        }
+
         activeFilePath = relPath;
         currentFilePath = entry.fullPath;
         currentFilename = basename(entry.fullPath);
@@ -765,9 +818,9 @@
         currentContent = entry.editedContent !== undefined ? entry.editedContent : text;
 
         showFileUI();
-        if (currentView === 'edit') editor.value = currentContent;
-        else if (currentView === 'diff') renderDiff();
-        else switchView('read');
+        editor.value = currentContent;
+        if (currentView === 'diff') renderDiff();
+        else if (currentView !== 'edit') switchView('read');
 
         updateChangeDot();
         renderFileList(fileSearch.value);
@@ -827,6 +880,8 @@
         currentFilePath = null;
 
         filenameEl.textContent = 'Pasted from clipboard';
+        // Same reason as in loadFileFromPath: sync before the panel hides.
+        editor.value = currentContent;
         showFileUI();
         render();
         switchView('read');
@@ -896,15 +951,30 @@
 
     async function loadFileFromPath(filePath) {
       try {
+        // Read first: a failed read must leave the current file's state intact.
         const text = await readTextFile(filePath);
-        originalContent = text;
-        currentContent = text;
+        stashCurrentEdits();
+
+        const stash = stashedEditsFor(filePath, text);
+        originalContent = stash ? stash.original : text;
+        currentContent = stash ? stash.editedContent : text;
         currentFilename = basename(filePath);
         currentFilePath = filePath;
         activeFilePath = null;
+        // Point the textarea at the file now loaded, while it is still visible.
+        // A pending autocorrect/IME composition in the editor is committed when
+        // the panel is hidden, and that commit fires an `input` event — which
+        // copies editor.value into currentContent. Left stale, the textarea
+        // still holds the PREVIOUS file's text, so that late event would write
+        // the wrong file's content into this buffer, and into its stash.
+        // This assignment MUST stay ABOVE switchView('read'): once the panel is
+        // hidden the commit has already fired, and moving this line below it
+        // reopens the bug.
+        editor.value = currentContent;
         showFileUI();
         switchView('read');
         updateChangeDot();
+        if (currentDirPath) renderFileList(fileSearch.value);
       } catch (e) {
         toast('Could not read file');
       }
@@ -1003,10 +1073,16 @@
         try {
           await writeTextFile(savePath, currentContent);
           originalContent = currentContent;
-          if (activeFilePath) {
-            const entry = fileEntries.get(activeFilePath);
+          stashes.delete(savePath);
+          // Resolve the tree entry by path, not just activeFilePath: this file
+          // may be in the open folder tree yet have been entered single-file,
+          // and leaving its stale editedContent behind would resurrect
+          // pre-save content on the next tree click.
+          const relPath = activeFilePath || treeRelPathFor(savePath);
+          if (relPath) {
+            const entry = fileEntries.get(relPath);
             if (entry) { entry.original = currentContent; delete entry.editedContent; }
-            modifiedFiles.delete(activeFilePath);
+            modifiedFiles.delete(relPath);
             renderFileList(fileSearch.value);
           }
           updateChangeDot();
@@ -1026,10 +1102,21 @@
         });
         if (!newPath) return;
         await writeTextFile(newPath, currentContent);
+        stashes.delete(newPath);
         currentFilePath = newPath;
         currentFilename = basename(newPath);
         filenameEl.textContent = currentFilename;
         originalContent = currentContent;
+        // Saving onto a path that is in the open folder tree must clear that
+        // entry's parked edits too, or the next tree click would resurrect
+        // pre-save content against a stale baseline.
+        const relPath = treeRelPathFor(newPath);
+        if (relPath) {
+          const entry = fileEntries.get(relPath);
+          if (entry) { entry.original = currentContent; delete entry.editedContent; }
+          modifiedFiles.delete(relPath);
+          renderFileList(fileSearch.value);
+        }
         updateChangeDot();
         toast('Saved');
       } catch (e) {
