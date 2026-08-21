@@ -2,6 +2,12 @@
 
 Append-only, newest first.
 
+### D-004 · 2026-08-21 · XSS defense: DOMPurify at the render sink only; attribute escaping for filenames; no CSP yet
+**Why:** Hostile markdown executed script in a webview with full-fs read/write. DOMPurify (3.4.14, defaults, vendored UMD — pinned as a devDependency for provenance, unlike the unpinned marked/diff vendors) wraps the single display sink so raw markdown round-trips untouched through editor/stash/diff/save. Filename sinks are a different class: `escapeHtml` never escapes quotes, so paths in `data-path="…"` needed a dedicated `escapeAttr` (attribute context), not DOMPurify — sanitizing filenames as HTML would mangle legitimate names.
+**Instead of:** sanitizing `currentContent` (corrupts source text); CSP in tauri.conf.json (deferred — good defense-in-depth follow-up that would also stop remote-image beaconing; kept out of this change).
+**Status:** active. Open follow-ups: `default-src 'self'` CSP; pin marked/diff like dompurify.
+**Where:** commit 34d4c7b.
+
 ### D-003 · 2026-08-21 · Unsaved edits auto-stash: in-memory, absolute-path-keyed, session-scoped
 **Why:** Karolina chose auto-stash over a confirm dialog (interruption + still one-click data loss) and over persistent local history (more build than the job needs). Switching files parks `{original, editedContent}` in a `Map` keyed by absolute path — the only key form that unifies a file reached from the folder tree with the same file opened from Finder (`fileEntries` is relative-path-keyed and wiped by every rescan, so it can't serve). Staleness is content-based: disk differing from the stashed baseline wins and drops the stash. Cleared on save, Save-As, and revert-to-clean.
 **Instead of:** confirm dialog; persistent snapshots; reusing `fileEntries` as the store (see above).
