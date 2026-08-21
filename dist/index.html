@@ -588,6 +588,8 @@
     const { open: openDialog, save: saveDialog } = window.__TAURI__.dialog;
     const { readTextFile, writeTextFile, readDir } = window.__TAURI__.fs;
     const { listen } = window.__TAURI__.event;
+    const { invoke } = window.__TAURI__.core;
+    const { getCurrentWindow } = window.__TAURI__.window;
 
     // ── State ──
     let originalContent = '';
@@ -863,12 +865,18 @@
 
     function showFileUI() {
       filenameEl.textContent = currentFilename;
+      setWindowTitle(currentFilename);
       emptyState.style.display = 'none';
       viewTabs.style.display = 'flex';
       saveBtn.style.display = 'inline-flex';
       copyBtn.style.display = 'inline-flex';
       copyDiffBtn.style.display = 'inline-flex';
       render();
+    }
+
+    function setWindowTitle(name) {
+      const title = name ? `Markdiff — ${name}` : 'Markdiff';
+      getCurrentWindow().setTitle(title).catch(() => {});
     }
 
     // ── Single file open (Tauri) ──
@@ -916,10 +924,22 @@
 
     // ── File opened from Finder / terminal ──
 
-    listen('open-file', async (event) => {
-      const path = event.payload;
-      if (path) await loadFileFromPath(path);
-    });
+    // On a cold start the backend already has the path before this webview
+    // exists, so its 'open-file' emit lands on nobody. Register the listener
+    // first, then drain the pending path — awaiting listen() guarantees that
+    // ordering rather than relying on IPC transport timing.
+    (async () => {
+      try {
+        await listen('open-file', async (event) => {
+          const path = event.payload;
+          if (path) await loadFileFromPath(path);
+        });
+        const path = await invoke('get_pending_file');
+        if (path) await loadFileFromPath(path);
+      } catch (e) {
+        toast('Could not open file');
+      }
+    })();
 
     // ── Views ──
 
