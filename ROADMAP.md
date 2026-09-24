@@ -20,4 +20,4 @@ What's next. Why things are the way they are lives in `DECISIONS.md` (its Status
 ### Assumptions made in 2026-09-24 session (verify before any work that depends on them)
 
 - [ ] **Tauri 2.11's IPC origin check doesn't affect the dialog plugin or the `get_pending_file` handoff.** Assumed because fs-plugin IPC worked under 2.11.6. If false, Open Folder or Finder-open breaks silently. Verify with the first watch item.
-- [ ] **Hiding folders with no md/txt file and skipping `dist`/`build`-free SKIP_DIRS matches how she browses.** Taste calls in D-005, not confirmed with her. If false, `team/`-style empty folders she expects to see are missing. Verify by asking once she has used the new sidebar.
+- [ ] **Hiding folders with no md/txt file, and the SKIP_DIRS list (which leaves `dist`/`build` walked), match how she browses.** Taste calls in D-005, not confirmed with her. If false, a folder she expects to see (e.g. one holding only PDFs) is missing from the sidebar. Verify by asking once she has used the new sidebar.
