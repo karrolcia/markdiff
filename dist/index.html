@@ -755,6 +755,11 @@
 
       fileListEl.querySelectorAll('.file-item').forEach(el => {
         el.addEventListener('click', () => openFileFromTree(el.dataset.path));
+        // Tooltip with the full name, only when the label is cut off.
+        el.addEventListener('mouseenter', () => {
+          const label = el.querySelector('.file-label');
+          el.title = label.scrollWidth > label.clientWidth ? label.textContent : '';
+        });
       });
       fileListEl.querySelectorAll('.folder-toggle').forEach(el => {
         el.addEventListener('click', () => {
