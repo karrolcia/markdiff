@@ -673,39 +673,54 @@
     }
 
     async function scanDirectory() {
-      fileTree = [];
+      // walkDir returns the tree in display order (pre-order, dirs first per
+      // level). Never re-sort it as a whole: a global sort detaches files
+      // from their folders.
+      const tree = await walkDir(currentDirPath, '', 0);
+      fileTree = tree;
       fileEntries.clear();
-      // walkDir emits the tree in display order (pre-order, dirs first per
-      // level). Never re-sort fileTree as a whole: a global sort detaches
-      // files from their folders.
-      await walkDir(currentDirPath, '', 0);
+      for (const item of tree) {
+        if (!item.isDir) fileEntries.set(item.path, { fullPath: item.fullPath, original: null });
+      }
       renderFileList();
     }
 
+    // Dependency/build folders: huge, and their READMEs are not the user's docs.
+    // Dot-folders (.git, .venv, ...) are skipped separately below.
+    const SKIP_DIRS = new Set(['node_modules', '__pycache__', 'venv', 'site-packages', 'target', 'bower_components']);
+
+    // No depth limit. Symlinked folders are never followed (readDir reports
+    // them as non-directories), so the walk cannot loop.
     async function walkDir(dirPath, prefix, depth) {
       let entries;
       try {
         entries = await readDir(dirPath);
-      } catch (e) { return; }
+      } catch (e) { return []; }
 
       entries.sort((a, b) => {
         if (!!a.isDirectory !== !!b.isDirectory) return a.isDirectory ? -1 : 1;
         return (a.name || '').localeCompare(b.name || '');
       });
 
-      for (const entry of entries) {
-        if (!entry.name || entry.name.startsWith('.')) continue;
+      // Read sibling folders concurrently; Promise.all keeps their order.
+      const parts = await Promise.all(entries.map(async (entry) => {
+        if (!entry.name || entry.name.startsWith('.')) return [];
         const relPath = prefix ? `${prefix}/${entry.name}` : entry.name;
         const fullPath = `${dirPath}/${entry.name}`;
 
         if (entry.isDirectory) {
-          fileTree.push({ path: relPath, fullPath, name: entry.name, depth, isDir: true, expanded: depth === 0 });
-          if (depth < 3) await walkDir(fullPath, relPath, depth + 1);
-        } else if (/\.(md|markdown|mdx|txt)$/i.test(entry.name)) {
-          fileTree.push({ path: relPath, fullPath, name: entry.name, depth, isDir: false });
-          fileEntries.set(relPath, { fullPath, original: null });
+          if (SKIP_DIRS.has(entry.name)) return [];
+          const sub = await walkDir(fullPath, relPath, depth + 1);
+          // Hide folders with no readable files anywhere beneath them.
+          if (!sub.some(e => !e.isDir)) return [];
+          return [{ path: relPath, fullPath, name: entry.name, depth, isDir: true, expanded: depth === 0 }, ...sub];
         }
-      }
+        if (/\.(md|markdown|mdx|txt)$/i.test(entry.name)) {
+          return [{ path: relPath, fullPath, name: entry.name, depth, isDir: false }];
+        }
+        return [];
+      }));
+      return parts.flat();
     }
 
     function renderFileList(filter = '') {
