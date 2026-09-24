@@ -2,6 +2,18 @@
 
 Append-only, newest first.
 
+### D-006 · 2026-09-24 · Save always targets the open file's absolute path; tree keys re-derived on every scan
+**Why:** Folder-tree state (`activeFilePath`, `modifiedFiles`, `fileEntries`) is keyed by path relative to the folder root, and opening a different folder never reset it. Save resolved its target through `fileEntries.get(activeFilePath)`, so after switching from folder A to folder B with the same relative path (`README.md`), saving wrote A's text over B's file. Fix is by invariant, not by clearing: save writes to `currentFilePath` (absolute, always set with the open file); `scanDirectory` parks the open file's edits in the path-keyed stash (D-003), then re-derives `activeFilePath` and `modifiedFiles` from the new tree; a stale scan (folder changed mid-walk) returns without touching state; `openFileFromTree` drops a click whose tree was replaced mid-read.
+**Instead of:** resetting `activeFilePath`/`modifiedFiles` in `openFolder` (loses the modified dot for stashed edits and still leaves the mid-scan click race); keeping the relative-key save lookup behind a guard (the relative key is the defect).
+**Status:** active. Cosmetic gap: a stash made stale by an on-disk change still shows the modified dot until the file is opened (`stashedEditsFor` then drops it).
+**Where:** `dist/index.html` `scanDirectory`, `openFileFromTree`, save handler.
+
+### D-005 · 2026-09-24 · Folder sidebar walks at any depth; skips dependency folders; hides folders with no readable file
+**Why:** The `depth < 3` cap hid 255 of 362 md/txt files in a real client folder (`~/FireScore`), with the deep folders rendered as empty rows. Uncapped is safe: tauri-plugin-fs 2.5.0 `read_dir` uses `file_type()` (no symlink follow), so symlinked folders report `isDirectory: false` and are never walked — no loops. Without the cap, dependency trees flood the list and cost thousands of IPC calls, so `node_modules`, `__pycache__`, `venv`, `site-packages`, `target`, `bower_components` are skipped (dot-folders were already). Lifting the cap also surfaced dozens of empty code folders, so folders with no md/markdown/mdx/txt file anywhere beneath are hidden.
+**Instead of:** a higher cap (same bug, later); lazy loading on expand (the filter would only search loaded folders); showing empty folders (noise created by this fix). Taste calls, reversible: `dist`/`build` are NOT skipped (they can hold docs); symlinked folders are not browsable.
+**Status:** active
+**Where:** `dist/index.html` `walkDir`/`scanDirectory`.
+
 ### D-004 · 2026-08-21 · XSS defense: DOMPurify at the render sink only; attribute escaping for filenames; no CSP yet
 **Why:** Hostile markdown executed script in a webview with full-fs read/write. DOMPurify (3.4.14, defaults, vendored UMD — pinned as a devDependency for provenance, unlike the unpinned marked/diff vendors) wraps the single display sink so raw markdown round-trips untouched through editor/stash/diff/save. Filename sinks are a different class: `escapeHtml` never escapes quotes, so paths in `data-path="…"` needed a dedicated `escapeAttr` (attribute context), not DOMPurify — sanitizing filenames as HTML would mangle legitimate names.
 **Instead of:** sanitizing `currentContent` (corrupts source text); CSP in tauri.conf.json (deferred — good defense-in-depth follow-up that would also stop remote-image beaconing; kept out of this change).

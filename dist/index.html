@@ -676,13 +676,23 @@
       // walkDir returns the tree in display order (pre-order, dirs first per
       // level). Never re-sort it as a whole: a global sort detaches files
       // from their folders.
-      const tree = await walkDir(currentDirPath, '', 0);
+      const dir = currentDirPath;
+      const tree = await walkDir(dir, '', 0);
+      // A newer scan (folder changed mid-walk) owns the sidebar now.
+      if (dir !== currentDirPath) return;
+
+      // Tree keys are paths relative to the folder root, so they go stale
+      // when the folder changes. Park the open file's edits under its
+      // absolute path, then re-derive every relative key from the new tree.
+      stashCurrentEdits();
       fileTree = tree;
       fileEntries.clear();
       for (const item of tree) {
         if (!item.isDir) fileEntries.set(item.path, { fullPath: item.fullPath, original: null });
       }
-      renderFileList();
+      activeFilePath = currentFilePath ? treeRelPathFor(currentFilePath) : null;
+      modifiedFiles = new Set(tree.filter(f => !f.isDir && stashes.has(f.fullPath)).map(f => f.path));
+      renderFileList(fileSearch.value);
     }
 
     // Dependency/build folders: huge, and their READMEs are not the user's docs.
@@ -837,6 +847,9 @@
 
       try {
         const text = await readTextFile(entry.fullPath);
+        // A folder scan replaced the tree mid-read: relPath may now name a
+        // different file, so drop this click rather than bind to it.
+        if (fileEntries.get(relPath) !== entry) return;
         if (entry.original === null) entry.original = text;
 
         // A folder rescan clears fileEntries, so edits parked from single-file
@@ -1117,8 +1130,10 @@
     // ── Save (Tauri) ──
 
     saveBtn.addEventListener('click', async () => {
-      // Save to existing path (from folder tree or previously opened file)
-      const savePath = activeFilePath ? fileEntries.get(activeFilePath)?.fullPath : currentFilePath;
+      // Save to the open file's absolute path. Never resolve it through the
+      // tree's relative key: after a folder change that key can name a
+      // different file with the same relative path, and overwrite it.
+      const savePath = currentFilePath;
       if (savePath) {
         try {
           await writeTextFile(savePath, currentContent);
