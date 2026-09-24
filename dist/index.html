@@ -675,11 +675,10 @@
     async function scanDirectory() {
       fileTree = [];
       fileEntries.clear();
+      // walkDir emits the tree in display order (pre-order, dirs first per
+      // level). Never re-sort fileTree as a whole: a global sort detaches
+      // files from their folders.
       await walkDir(currentDirPath, '', 0);
-      fileTree.sort((a, b) => {
-        if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
-        return a.path.localeCompare(b.path);
-      });
       renderFileList();
     }
 
@@ -689,7 +688,10 @@
         entries = await readDir(dirPath);
       } catch (e) { return; }
 
-      entries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      entries.sort((a, b) => {
+        if (!!a.isDirectory !== !!b.isDirectory) return a.isDirectory ? -1 : 1;
+        return (a.name || '').localeCompare(b.name || '');
+      });
 
       for (const entry of entries) {
         if (!entry.name || entry.name.startsWith('.')) continue;
@@ -710,18 +712,34 @@
       const lf = filter.toLowerCase();
       let html = '';
       const expanded = new Set(fileTree.filter(f => f.isDir && f.expanded).map(f => f.path));
+      // Visible only if EVERY ancestor folder is expanded, not just the parent.
+      const ancestorsExpanded = (path) => {
+        for (let i = path.indexOf('/'); i !== -1; i = path.indexOf('/', i + 1)) {
+          if (!expanded.has(path.substring(0, i))) return false;
+        }
+        return true;
+      };
+      // While filtering, ignore collapse state: show each matching file plus
+      // the folders on its path, and no other folders.
+      const matchDirs = new Set();
+      if (filter) {
+        for (const f of fileTree) {
+          if (f.isDir || !f.name.toLowerCase().includes(lf)) continue;
+          for (let i = f.path.indexOf('/'); i !== -1; i = f.path.indexOf('/', i + 1)) {
+            matchDirs.add(f.path.substring(0, i));
+          }
+        }
+      }
 
       for (const item of fileTree) {
-        if (item.depth > 0) {
-          const parent = item.path.substring(0, item.path.lastIndexOf('/'));
-          if (!expanded.has(parent)) continue;
-        }
-        if (filter && !item.isDir && !item.name.toLowerCase().includes(lf)) continue;
+        if (filter) {
+          if (item.isDir ? !matchDirs.has(item.path) : !item.name.toLowerCase().includes(lf)) continue;
+        } else if (!ancestorsExpanded(item.path)) continue;
 
         const indent = item.depth * 16;
         if (item.isDir) {
           html += `<div class="folder-toggle" style="padding-left:${12 + indent}px" data-path="${escapeAttr(item.path)}">
-            <span class="arrow ${item.expanded ? 'open' : ''}">&#9654;</span> ${escapeHtml(item.name)}
+            <span class="arrow ${item.expanded || filter ? 'open' : ''}">&#9654;</span> ${escapeHtml(item.name)}
           </div>`;
         } else {
           const active = item.path === activeFilePath;
